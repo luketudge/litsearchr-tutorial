@@ -1,0 +1,407 @@
+---
+title: "litsearchr example"
+output:
+  html_document:
+    toc: TRUE
+    toc_float: TRUE
+    df_print: "paged"
+---
+
+The R package `litsearchr` provides various functions to help with planning a systematic search of the scientific literature on a given topic. This short tutorial gives an example of how to use `litsearchr`, along with some brief explanations of its workings.
+
+`litsearchr` was created by the amazing [Eliza Grames](https://elizagrames.github.io), and a lot of this tutorial is an elaboration of the existing [vignette](https://elizagrames.github.io/litsearchr/litsearchr_vignette_v041.html) for the package.
+
+## Setup
+
+As well as `litsearchr` itself, we will use a few other R packages in the tutorial. Let's load them.
+
+```{r, message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(ggraph)
+library(igraph)
+library(readr)
+```
+
+## Installation
+
+To use the `litsearchr` package, we need to install it first.
+
+`litsearchr` isn't (yet) stored in the package repository of [CRAN](https://cran.r-project.org/web/packages/index.html), the Comprehensive R Archive Network. This means that the usual `install.packages()` function or the Install button in RStudio won't find it. Instead, we can install the package from Eliza's GitHub repository.
+
+The `devtools` package provides a function for installing R packages from GitHub instead of from CRAN. So we can use this.
+
+```{r, eval=FALSE}
+library(devtools)
+install_github("elizagrames/litsearchr", ref="main")
+```
+
+Now that we have installed `litsearchr` we can load it.
+
+```{r}
+library(litsearchr)
+```
+
+`litsearchr` is a new package and is currently in development. So we should keep track of which version we are using, in case we later work with a newer version and find that the examples in this tutorial no longer work.
+
+```{r}
+packageVersion("litsearchr")
+```
+
+## Example
+
+Let's imagine that we want to retrieve journal articles about treating phobias with a combination of medication and cognitive-behavioral therapy. Our overall topic consists of the three sub-topics *medication*, *CBT* and *phobia*, and we want to get articles that are about all three.
+
+## Loading results
+
+The starting point in `litsearchr` is an existing search that we have already carried out. We first conduct a quick, cursory search for our topic of interest. This is known as the 'naive search'. `litsearchr` will then take the results of our naive search and suggest improvements that might capture more articles that are relevant to our topic (and hopefully fewer that are not relevant).
+
+We start by going to the [PubMed search page](https://pubmed.ncbi.nlm.nih.gov/advanced) and enter the search in the **Query box** there. For this example, I entered the following three search terms, combined with AND, like this:
+
+> `(medication) AND (CBT) AND (phobia)`
+
+If you click on the **Send to** button above the PubMed search results, and then select to send them to **Citation manager**, you will be prompted to download all the results to a file that `litsearchr` can read. I have downloaded the example results to a file called *pubmed-medication-set.nbib*.
+
+We can load results from a file using the `litsearchr` function `import_results()`. We give the file name as the `file` argument.
+
+```{r}
+results = import_results(file="pubmed-medication-set.nbib")
+```
+
+`import_results()` gives us a dataframe in which each result is a row. We can see from the number of rows how many results our search got.
+
+```{r}
+nrow(results)
+```
+
+We can take a look at the first few.
+
+```{r}
+results
+```
+
+There are columns for the title, authors, date, abstract, and so on. We can check the names of all the columns to see all the information we have on each search result.
+
+```{r}
+colnames(results)
+```
+
+And just as a check, let's can take a look at the title of the first result.
+
+```{r}
+results[1, "title"]
+```
+
+## Getting potential search terms
+
+The next step is to analyze the search results that we already have and look to see whether there are more search terms in them that might be related to our topic. If so, we can use these additional terms in a new search to get more relevant results.
+
+There are two different ways of searching for new terms.
+
+### Keywords
+
+Many authors or journals already provide a list of keywords attached to the article. So the simplest way to get new search terms is just to look at what keywords were already provided in the articles we already found.
+
+As an example, we can take a look at the keywords for the first article in our results.
+
+```{r}
+results[1, "keywords"]
+```
+
+The keywords are missing (`NA`) from this article. In fact, they are missing from quite a few. The fourth article in our results is the first that has any keywords supplied.
+
+```{r}
+results[4, "keywords"]
+```
+
+How many articles are missing keywords? We can count up the number of `NA` values to find out.
+
+```{r}
+sum(is.na(results[, "keywords"]))
+```
+
+More than half of them. So relying on the provided keywords might not always be such a great approach. But for the purposes of demonstration let's see how we could use them in `litsearchr`.
+
+`litsearchr` has a function `extract_terms()` that can gather the keywords from this column of our search results. The `keywords` argument is where we put the column of keywords from our results dataframe. The `method="tagged"` argument lets `extract_terms()` know that we are getting keywords that article authors themselves have provided (or 'tagged' the article with).
+
+```{r}
+extract_terms(keywords=results[, "keywords"], method="tagged")
+```
+
+We seem to have got only multi-word phrases, no single words. And we didn't get very many. As is often the case in programming, we need to check the documentation for `extract_terms()` to see what its default behavior is. (We can get the documentation in RStudio by typing `? extract_terms` at the console).
+
+We see that `extract_terms()` has a few default arguments:
+
+* `min_freq=2`. Only get keywords that appear at least twice in the full set of results. This is good for making sure that we are only getting keywords that are related to more than just one article in our field of interest. But it might also miss out some important extra suggestions.
+* `min_n=2`. Only get keywords that consist of at least two words. This is why we only see multi-word phrases in the keywords we just got.
+* `max_n=5`. Get keywords up to five words long. Maybe this is longer than we need.
+
+We can experiment with changing some of these arguments. For example, let's try including single words. This time, let's store the result in a variable, as we will use it later on.
+
+```{r}
+keywords <- extract_terms(keywords=results[, "keywords"], method="tagged", min_n=1)
+
+keywords
+```
+
+This gets us more search terms. Some of these might be useful new terms to include in our literature search. But others are clearly too broad, for example *outcome*, or are from tangential topics, for example *virtual reality*.
+
+You could try narrowing the terms down a bit, for example by asking only for those that are provided for at least three of the articles in our search. Where there are additional arguments to a function like this, it is a good idea to try out a few variations to get some idea of how they work. You can give this a go. For now, let's move on to a different method of getting search terms from our naive search.
+
+### Titles and abstracts
+
+We saw above that not all articles even provide keywords. And maybe the authors of the articles themselves can't always be relied upon to tag their articles with all the keywords that might link their article to relevant topics. So an alternative (or supplementary) method of finding new relevant search terms is instead to search in the titles and/or abstracts of the articles.
+
+Here we will search in the titles only, to keep the example manageable. The article abstracts are much longer and contain many additional irrelevant words. Filtering these out would take a lot of work.
+
+Titles are fairly short and should contain mostly relevant terms. But we will still need to filter them down a bit to get only the 'interesting' words. Somebody has already invented a method for doing this, called Rapid Automatic Keyword Extraction (RAKE). `litsearchr` can apply this method if we tell it to (the argument for doing so has the curious name `"fakerake"`, because in fact `litsearchr` uses a slightly simplified version of the full RAKE technique).
+
+Just as when we searched among the author-provided keywords, here too we can give arguments `min_n`, and `max_n` to choose whether we include single words or multi-word phrases, and we can give `min_freq` to exclude words that occur in too few of the titles in our original search.
+
+```{r}
+extract_terms(text=results[, "title"], method="fakerake", min_freq=3, min_n=2)
+```
+
+Searching in the titles gets us more search terms than we got from just the author-provided keywords. In part this is because every article has a title whereas not every article supplies keywords. And in part it is because the titles also contain additional irrelevant words, whereas the keywords have been specially chosen for their relevance. The title search probably gets us many more terms than we need.
+
+Some of the phrases that appear in a title are general science or data analysis terms and are not related to the specific topic of the article. In language analysis, such frequently-occurring but uninformative words are often called 'stopwords'. If we are going to work with `litsearchr` a lot and will often need to filter out the same set of stopwords, then it can be handy to keep these words in a text file. We can then read this file into R when we need them, and we can add to the file each time we encounter more words that we know are irrelevant.
+
+I have prepared a (non-exhaustive) list of generic clinical psychology words that occurred in this set of articles. They are stored in the file **clin_psy_stopwords.txt**. Let's read it in and take a look.
+
+```{r}
+clinpsy_stopwords <- read_lines("clin_psy_stopwords.txt")
+
+clinpsy_stopwords
+```
+
+The `extract_terms()` function provides a `stopwords` argument that we can use to filter out words. `litsearchr` also provides a general list of stopwords for English (and for some other languages) via the `get_stopwords()` function, so we can also add this to our own more specific stopwords.
+
+```{r}
+all_stopwords <- c(get_stopwords("English"), clinpsy_stopwords)
+```
+
+Now let's use this big list of stopwords to have another go at extracting only relevant search terms.
+
+```{r}
+title_terms <- extract_terms(
+  text=results[, "title"],
+  method="fakerake",
+  min_freq=3, min_n=2,
+  stopwords=all_stopwords
+)
+
+title_terms
+```
+
+This looks a bit better. We should be careful not to accidentally exclude any potentially relevant words at this stage, and as usual exploration is important. Try out different lists of stopwords and different values of `min_freq`, `min_n`, and `max_n` to get a clear impression of the articles in the naive search.
+
+Let's finish by adding together the search terms we got from the article titles and those we got from the keywords earlier, removing duplicates.
+
+```{r}
+terms <- unique(c(keywords, title_terms))
+```
+
+## Network analysis
+
+Our list of new search terms is looking fairly good. But there are probably still some in there that are unrelated to the others and to our topic of interest. These perhaps only occur in a small number of articles that do not mention any of the other search terms. We would like some systematic way of identifying these 'isolated' search terms.
+
+One way to do this is to analyze the search terms as a network. The idea behind this is that terms are linked to each other by virtue of appearing in the same articles. If we can find out which terms tend to occur together in the same article, we can pick out groups of terms that are probably all referring to the same topic (because they occur in the same subset of articles), and we can filter out terms that do not often occur together with any of the main groups of terms.
+
+We don't have the full texts of the articles, and in any case checking for search terms in a large number of full texts would be a big task for my puny computer. So we will take the title and abstract of each article as the 'content' of that article, and count a term as having occurred in that article if it is to be found in either the title or abstract. For this, we need to join the title of each article to its abstract.
+
+```{r}
+docs <- paste(results[, "title"], results[, "abstract"])
+```
+
+Let's just check the first one to make sure we did this right.
+
+```{r}
+docs[1]
+```
+
+We now create a matrix that records which terms appear in which articles. The `litsearchr` function `create_dfm()` does this. 'DFM' stands for 'document-feature matrix', where the 'documents' are our articles and the 'features' are the search terms. The `elements` argument is the list of documents. The `features` argument is the list of terms whose relationships we want to analyze within that set of documents.
+
+```{r}
+dfm <- create_dfm(elements=docs, features=terms)
+```
+
+The rows of our matrix represent the articles (their titles and abstracts), and the columns represent the search terms. Each entry in the matrix records how many times that article contains that term. For example, if we look at the first five articles we see that *anxiety disorder* occurs twice each in the first two, and once in the third, and that *cognitive behavioural* occurs once in the first article.
+
+```{r}
+as.matrix(dfm)[1:5, 1:2]
+```
+
+We can then turn this matrix into a network of linked search terms, using the `litsearchr` function `create_network()`. This function has an argument `min_studies` that excludes terms that occur in fewer than a given number of articles.
+
+```{r}
+g <- create_network(as.matrix(dfm), min_studies=3)
+```
+
+### ggraph
+
+We should try to make a picture of our network of terms to get a better idea of its structure. This isn't easy, as we need to show a large number of terms plus all the links between them. The `ggraph` package provides some great tools for drawing networks. There is a lot to learn and discover about drawing networks, and you can look at the [tutorials for `ggraph`](https://www.data-imaginist.com/2017/ggraph-introduction-layouts) if you want to learn more. But here network visualization is just an aside, so we will keep it simple.
+
+The `ggraph()` function takes the network that we got from `create_network()` as its argument and draws it as a graph. In addition, we can specify a layout for the graph. Here we use the 'Kamada and Kawai' layout. To sum it up very simply, this layout draws terms that are closely linked close together, and those that are less closely linked further away from each other. We add some labels showing what the actual terms are, using `geom_node_text()`. Since there are far too many terms to show all of them without completely cluttering the figure, we show just an arbitrary subset of them that do not overlap on the figure, using the argument `check_overlap=TRUE`. Finally, we also add lines linking the terms, using `geom_edge_link()`. We color these lines so there are more solid lines linking terms that appear in more articles together (this is called the 'weight' of the link).
+
+```{r}
+ggraph(g, layout="stress") +
+  coord_fixed() +
+  expand_limits(x=c(-3, 3.5)) +
+  geom_edge_link(aes(alpha=weight)) +
+  geom_node_point(shape="circle filled", fill="white") +
+  geom_node_text(aes(label=name), hjust="outward", check_overlap=TRUE) +
+  guides(edge_alpha=FALSE)
+```
+
+Given the way in which we drew the graph, it tells us a few things about our search terms.
+
+Terms that appear near the center of the graph and that are linked to each other by darker lines are probably more important for our overall topic. Here these include *anxiety disorder*, *social phobia*, and two variants of *cognitive-behavioral therapy* (with and without a hyphen), among others.
+
+Terms that appear at the periphery of the graph and linked to it only by faint lines are not closely related to any other terms. These are mostly tangential terms unrelated to our main topic, for example *fmri*, *autism*, and *virtual reality*.
+
+Interestingly, we see one major anomaly at the very top of the graph. The clearly very relevant term *cognitive-behavioural therapy* is nonetheless isolated from the others. This is probably because it contains the minority British spelling of *behaviour*. We will need to treat this as a special case later on, and it is a good illustration of the importance of looking carefully at our results.
+
+### Pruning
+
+Now let's use the network to rank our search terms by importance, with the aim of pruning away some of the least important ones.
+
+The 'strength' of each term in the network is the number of other terms that it appears together with. We can get this information from our network using the `strength()` function from the `igraph` package (behind the scenes, `litsearchr` uses `igraph` for some of the workings of its network analyses). If we then arrange the terms in ascending order of strength we see those that might be the least important.
+
+```{r}
+strengths <- strength(g)
+
+data.frame(term=names(strengths), strength=strengths, row.names=NULL) %>%
+  mutate(rank=rank(strength, ties.method="min")) %>%
+  arrange(strength) ->
+  term_strengths
+
+term_strengths
+```
+
+At the top are the terms that are most weakly linked to the others. For some of them you can compare this with their positions on the graph visualization above, where they appear near the margins of the figure. In most cases, terms like these are completely irrelevant and have occurred in a few of the articles in the naive search for arbitrary reasons, for example *virtual reality*. Some are perhaps still relevant but are just very rarely used.
+
+We would like to discard some of the terms that only rarely occur together with the others. What rule can we use to make a decision about which to discard? To get an idea of how we might approach this question, let's visualize the strengths of the terms.
+
+```{r}
+cutoff_fig <- ggplot(term_strengths, aes(x=rank, y=strength, label=term)) +
+  geom_line() +
+  geom_point() +
+  geom_text(data=filter(term_strengths, rank>5), hjust="right", nudge_y=20, check_overlap=TRUE)
+
+cutoff_fig
+```
+
+The figure shows the terms in ascending order of strength from left to right. Again, only an arbitrary subset of the terms are labeled, so as not to clutter the figure. We can see for example that there are four terms (starting with *anxiety*) that have much higher strengths than the others.
+
+Let's use this figure to visualize two methods that `litsearchr` offers for pruning away the search terms least closely linked to the others. Both of these involve finding a cutoff value for term strength, such that we discard terms with a strength below that value. The `find_cutoff()` function implements these methods.
+
+#### Cumulatively
+
+One simple way to decide on a cutoff is to choose to retain a certain proportion of the total strength of the network of search terms, for example 80%. If we supply the argument `method="cumulative"` to the `find_cutoff()` function, we get the cutoff strength value according to this method. The `percent` argument specifies what proportion of the total strength we would like to retain.
+
+```{r}
+cutoff_cum <- find_cutoff(g, method="cumulative", percent=0.8)
+
+cutoff_cum
+```
+
+Let's see this on our figure.
+
+```{r}
+cutoff_fig +
+  geom_hline(yintercept=cutoff_cum, linetype="dashed")
+```
+
+Once we have found a cutoff value, the `reduce_graph()` function applies it and prunes away the terms with low strength. The arguments are the original network and the cutoff. The `get_keywords()` function then gets the remaining terms from the reduced network.
+
+```{r}
+get_keywords(reduce_graph(g, cutoff_cum))
+```
+
+#### Changepoints
+
+Looking at the figure above, another method of pruning away terms suggests itself. There are certain points along the ranking of terms where the strength of the next term is much greater than that of the previous one (places where the ascending line 'jumps up'). We could use these places as cutoffs, since the terms below them have much lower strength than those above. There may of course be more than one place where term strength jumps up like this, so we will have multiple candidates for cutoffs. The same `find_cutoff()` function with the argument `method="changepoint"` will find these cutoffs. The `knot_num` argument specifies how many 'knots' we wish to slice the keywords into.
+
+```{r}
+cutoff_change <- find_cutoff(g, method="changepoint", knot_num=3)
+
+cutoff_change
+```
+
+This time we get several suggested cutoffs. Let's put them on our figure, where we can see that they cut off the search terms just before large increases in term strength.
+
+```{r}
+cutoff_fig +
+  geom_hline(yintercept=cutoff_change, linetype="dashed")
+```
+
+After doing this, we can apply the same `reduce_graph()` function that we did for the cumulative strength method. The only difference is that we have to pick one of the cutoffs in our vector.
+
+```{r}
+g_redux <- reduce_graph(g, cutoff_change[1])
+selected_terms <- get_keywords(g_redux)
+
+selected_terms
+```
+
+Remember the issue with the British spelling of *behaviour*. We should add this term back in. It is also probably a good idea to add back in the terms of our original naive search if they did not turn up in our final set of terms.
+
+```{r}
+extra_terms <- c(
+  "medication",
+  "CBT",
+  "cognitive-behavioural therapy",
+  "cognitive behavioural therapy"
+)
+
+selected_terms <- c(selected_terms, extra_terms)
+
+selected_terms
+```
+
+## Grouping
+
+Now that we have got a revised list of search terms from the results of our naive search, we want to turn them into a new search query that we can use to get more articles relevant to the same topic. For this new, hopefully more rigorous, search we will need a combination of `OR` and `AND` operators. The `OR` operator should combine search terms that are all about the same subtopic, so that we get articles that contain any one of them. The `AND` operator should combine these groups of search terms so that we get only articles that mention at least one term from all of the subtopics that are interested in.
+
+In our starting example we had three subtopics, medication, cognitive-behavioral therapy, and phobias. So the first step is to take the terms that we have found and group them into clusters related to each of these topics. (Or it may be the case that our work with `litsearchr` has led us to rethink our subtopics or to add new ones.)
+
+There are methods for automatically grouping networks into clusters, but these are not always so reliable; computers don't understand what words mean. Currently the `litsearchr` documentation recommends doing this step manually. We look at our search terms, and put them into a list of separate vectors, one for each subtopic.
+
+```{r}
+grouped_terms <-list(
+  medication=selected_terms[c(6, 23)],
+  cbt=selected_terms[c(5, 13, 24, 25, 26)],
+  phobia=selected_terms[c(1, 2, 4, 7, 8, 11, 16, 19)]
+)
+
+grouped_terms
+```
+
+## Writing a new search
+
+The `write_search()` function takes our list of grouped search terms and writes the text of a new search. There are quite a few arguments to take care of for this function:
+
+* `languages` provides a list of languages to translate the search into, in case we want to get articles in multiple languages.
+* `exactphrase` controls whether terms that consist of more than one word should be matched exactly rather than as two separate words. If we have phrases that are only relevant as a whole phrase, then we should set this to `TRUE`, so that for example *social phobia*  will not also catch all the articles containing the word *social*.
+* `stemming` controls whether words are stripped down to the smallest meaningful part of the word (its 'stem') so that we make sure to catch all variants of the word, for example catching both *behavior* and *behavioral*.
+* `closure` controls whether these partial matches are matched at the left end of a word (`"left"`), at the right (`"right"`), only as exact matches (`"full"`) or as any word containing a word (`"none"`).
+* `writesearch` controls whether we would like to write the search text to a file.
+
+```{r, eval=FALSE}
+write_search(
+  grouped_terms,
+  languages="English",
+  exactphrase=TRUE,
+  stemming=TRUE,
+  closure="left",
+  writesearch=TRUE
+)
+```
+
+Let's read in the text file that we just wrote.
+
+```{r}
+read_file("search-inEnglish.txt")
+```
+
+We can now go back to the search site and copy in the contents of this text file into the search field to conduct a new search.
