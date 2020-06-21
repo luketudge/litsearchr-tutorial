@@ -1,5 +1,5 @@
 ---
-title: "litsearchr example"
+title: "litsearchr tutorial"
 output:
   html_document:
     toc: TRUE
@@ -7,7 +7,7 @@ output:
     df_print: "paged"
 ---
 
-The R package `litsearchr` provides various functions to help with planning a systematic search of the scientific literature on a given topic. This short tutorial gives an example of how to use `litsearchr`, along with some brief explanations of its workings.
+The R package `litsearchr` provides various functions to help with planning a systematic search of the scientific literature on a given topic. This tutorial gives an example of how to use `litsearchr`, along with some brief explanations of its workings.
 
 `litsearchr` was created by the amazing [Eliza Grames](https://elizagrames.github.io), and a lot of this tutorial is an elaboration of the existing [vignette](https://elizagrames.github.io/litsearchr/litsearchr_vignette_v041.html) for the package.
 
@@ -52,8 +52,6 @@ packageVersion("litsearchr")
 
 Let's imagine that we want to retrieve journal articles about treating phobias with a combination of medication and cognitive-behavioral therapy. Our overall topic consists of the three sub-topics *medication*, *CBT* and *phobia*, and we want to get articles that are about all three.
 
-## Loading results
-
 The starting point in `litsearchr` is an existing search that we have already carried out. We first conduct a quick, cursory search for our topic of interest. This is known as the 'naive search'. `litsearchr` will then take the results of our naive search and suggest improvements that might capture more articles that are relevant to our topic (and hopefully fewer that are not relevant).
 
 We start by going to the [PubMed search page](https://pubmed.ncbi.nlm.nih.gov/advanced) and enter the search in the **Query box** there. For this example, I entered the following three search terms, combined with AND, like this:
@@ -62,34 +60,36 @@ We start by going to the [PubMed search page](https://pubmed.ncbi.nlm.nih.gov/ad
 
 If you click on the **Send to** button above the PubMed search results, and then select to send them to **Citation manager**, you will be prompted to download all the results to a file that `litsearchr` can read. I have downloaded the example results to a file called *pubmed-medication-set.nbib*.
 
+## Loading results
+
 We can load results from a file using the `litsearchr` function `import_results()`. We give the file name as the `file` argument.
 
 ```{r}
-results = import_results(file="pubmed-medication-set.nbib")
+naive_results <- import_results(file="pubmed-medication-set.nbib")
 ```
 
 `import_results()` gives us a dataframe in which each result is a row. We can see from the number of rows how many results our search got.
 
 ```{r}
-nrow(results)
+nrow(naive_results)
 ```
 
 We can take a look at the first few.
 
 ```{r}
-results
+naive_results
 ```
 
 There are columns for the title, authors, date, abstract, and so on. We can check the names of all the columns to see all the information we have on each search result.
 
 ```{r}
-colnames(results)
+colnames(naive_results)
 ```
 
 And just as a check, let's can take a look at the title of the first result.
 
 ```{r}
-results[1, "title"]
+naive_results[1, "title"]
 ```
 
 ## Getting potential search terms
@@ -105,19 +105,19 @@ Many authors or journals already provide a list of keywords attached to the arti
 As an example, we can take a look at the keywords for the first article in our results.
 
 ```{r}
-results[1, "keywords"]
+naive_results[1, "keywords"]
 ```
 
 The keywords are missing (`NA`) from this article. In fact, they are missing from quite a few. The fourth article in our results is the first that has any keywords supplied.
 
 ```{r}
-results[4, "keywords"]
+naive_results[4, "keywords"]
 ```
 
 How many articles are missing keywords? We can count up the number of `NA` values to find out.
 
 ```{r}
-sum(is.na(results[, "keywords"]))
+sum(is.na(naive_results[, "keywords"]))
 ```
 
 More than half of them. So relying on the provided keywords might not always be such a great approach. But for the purposes of demonstration let's see how we could use them in `litsearchr`.
@@ -125,7 +125,7 @@ More than half of them. So relying on the provided keywords might not always be 
 `litsearchr` has a function `extract_terms()` that can gather the keywords from this column of our search results. The `keywords` argument is where we put the column of keywords from our results dataframe. The `method="tagged"` argument lets `extract_terms()` know that we are getting keywords that article authors themselves have provided (or 'tagged' the article with).
 
 ```{r}
-extract_terms(keywords=results[, "keywords"], method="tagged")
+extract_terms(keywords=naive_results[, "keywords"], method="tagged")
 ```
 
 We seem to have got only multi-word phrases, no single words. And we didn't get very many. As is often the case in programming, we need to check the documentation for `extract_terms()` to see what its default behavior is. (We can get the documentation in RStudio by typing `? extract_terms` at the console).
@@ -139,7 +139,7 @@ We see that `extract_terms()` has a few default arguments:
 We can experiment with changing some of these arguments. For example, let's try including single words. This time, let's store the result in a variable, as we will use it later on.
 
 ```{r}
-keywords <- extract_terms(keywords=results[, "keywords"], method="tagged", min_n=1)
+keywords <- extract_terms(keywords=naive_results[, "keywords"], method="tagged", min_n=1)
 
 keywords
 ```
@@ -159,7 +159,7 @@ Titles are fairly short and should contain mostly relevant terms. But we will st
 Just as when we searched among the author-provided keywords, here too we can give arguments `min_n`, and `max_n` to choose whether we include single words or multi-word phrases, and we can give `min_freq` to exclude words that occur in too few of the titles in our original search.
 
 ```{r}
-extract_terms(text=results[, "title"], method="fakerake", min_freq=3, min_n=2)
+extract_terms(text=naive_results[, "title"], method="fakerake", min_freq=3, min_n=2)
 ```
 
 Searching in the titles gets us more search terms than we got from just the author-provided keywords. In part this is because every article has a title whereas not every article supplies keywords. And in part it is because the titles also contain additional irrelevant words, whereas the keywords have been specially chosen for their relevance. The title search probably gets us many more terms than we need.
@@ -184,7 +184,7 @@ Now let's use this big list of stopwords to have another go at extracting only r
 
 ```{r}
 title_terms <- extract_terms(
-  text=results[, "title"],
+  text=naive_results[, "title"],
   method="fakerake",
   min_freq=3, min_n=2,
   stopwords=all_stopwords
@@ -210,7 +210,7 @@ One way to do this is to analyze the search terms as a network. The idea behind 
 We don't have the full texts of the articles, and in any case checking for search terms in a large number of full texts would be a big task for my puny computer. So we will take the title and abstract of each article as the 'content' of that article, and count a term as having occurred in that article if it is to be found in either the title or abstract. For this, we need to join the title of each article to its abstract.
 
 ```{r}
-docs <- paste(results[, "title"], results[, "abstract"])
+docs <- paste(naive_results[, "title"], naive_results[, "abstract"])
 ```
 
 Let's just check the first one to make sure we did this right.
@@ -404,4 +404,58 @@ Let's read in the text file that we just wrote.
 read_file("search-inEnglish.txt")
 ```
 
-We can now go back to the search site and copy in the contents of this text file into the search field to conduct a new search.
+We can now go back to the search site and copy the contents of this text file into the search field to conduct a new search.
+
+## Checking the new search
+
+I ran our new search and downloaded them to a file called *pubmed-pharmacoth-set.nbib*. Let's load this file of results with `litsearchr`.
+
+```{r}
+new_results <- import_results(file="pubmed-pharmacoth-set.nbib")
+```
+
+How many did we get this time?
+
+```{r}
+nrow(new_results)
+```
+
+We get a lot more than with the naive search. We now need to check whether the new results are relevant to our chosen topic. This is something that we cannot do automatically. At this stage, we have to start sifting through the results and apply our domain expertise. But there are a few basic things that we can check.
+
+### Against the naive search
+
+We can first check whether all of the results of the naive search are in the new search. Since we conducted the naive search using the most important terms that occurred to us for our topic, and since we included these same terms or very similar in our new search, we ought to get the same articles back among our new results, at least if they were really relevant.
+
+```{r}
+naive_results %>%
+  mutate(in_new_results=title %in% new_results[, "title"]) ->
+  naive_results
+
+naive_results %>%
+  filter(!in_new_results) %>%
+  select(title, keywords)
+```
+
+The good news here is that most of the articles that were in the naive search but not in the new search are not really relevant to the overall topic. For example, the first article is about dizziness, and many of the others are about clinical syndromes other than phobia.
+
+The bad news is that there are some relevant articles that were in the naive search but are not in the new search. For example, there are clearly relevant studies of the drugs *moclobemide* and *D-cycloserine*. We should try to find out why we missed these. Some testing and checking with further searches will be necessary.
+
+### Against gold standard results
+
+If we have started reviewing the literature on our chosen topic, we may already know the titles of some important articles that have been written on the subject. So another way of checking our new search is to check whether it includes specific important results. `litsearchr` provides a function called `check_recall()` for searching for specific titles. We do not have to get the titles of our desired articles exactly right. If the capitalization or punctuation is slightly different from the version in our results dataframe, `check_recall()` will find the closest match,
+
+Let's try it.
+
+```{r}
+important_titles <- c(
+  "Efficacy of treatments for anxiety disorders: A meta-analysis",
+  "Cognitive-behavioral therapy for anxiety and related disorders: A meta-analysis of randomized placebo-controlled trials",
+  "Comparative effectiveness and safety of cognitive-behavioral therapy and pharmacotherapy for childhood anxiety disorders: A systematic review and meta-analysis"
+)
+
+check_recall(important_titles, new_results[, "title"])
+```
+
+All of the best matches in the output table are clearly the articles that we were looking for, so our new search has found these.
+
+That's the end of our tutorial. You can try to refine the example search further, or try one of your own.

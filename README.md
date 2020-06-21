@@ -7,7 +7,9 @@ Head [here](litsearchr_tutorial.html) for the main tutorial page.
 ## Additional files
 
 * [litsearchr_tutorial.Rmd](litsearchr_tutorial.Rmd): R markdown source for the tutorial page.
-* [pubmed-medication-set.nbib](pubmed-medication-set.nbib): Example *nbib* file of search results retrieved from [PubMed](https://pubmed.ncbi.nlm.nih.gov/advanced).
+* Some example *nbib* files of search results retrieved from [PubMed](https://pubmed.ncbi.nlm.nih.gov/advanced):
+  * [pubmed-medication-set.nbib](pubmed-medication-set.nbib)
+  * [pubmed-pharmacoth-set.nbib](pubmed-pharmacoth-set.nbib)
 * [clin_psy_stopwords.txt](clin_psy_stopwords.txt): Example file of stopwords related to the search topic used in the tutorial.
 * [search-inEnglish.txt](search-inEnglish.txt): Example search query produced by the `write_search()` function.
 
