@@ -2,7 +2,7 @@
 
 The R package `litsearchr` provides various functions to help with planning a systematic search of the scientific literature on a given topic. This short tutorial gives an example of how to use `litsearchr`, along with some brief explanations of its workings. `litsearchr` was created by the amazing [Eliza Grames](https://elizagrames.github.io), and a lot of this tutorial is an elaboration of the existing [vignette](https://elizagrames.github.io/litsearchr/litsearchr_vignette_v041.html) for the package.
 
-Head [here](litsearchr_tutorial.html) for the main tutorial page.
+Head [here](https://luketudge.github.io/litsearchr-tutorial/litsearchr_tutorial.html) for the main tutorial page.
 
 ## Additional files
 
