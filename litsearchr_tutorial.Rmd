@@ -225,16 +225,16 @@ We now create a matrix that records which terms appear in which articles. The `l
 dfm <- create_dfm(elements=docs, features=terms)
 ```
 
-The rows of our matrix represent the articles (their titles and abstracts), and the columns represent the search terms. Each entry in the matrix records how many times that article contains that term. For example, if we look at the first five articles we see that *anxiety disorder* occurs twice each in the first two, and once in the third, and that *cognitive behavioural* occurs once in the first article.
+The rows of our matrix represent the articles (their titles and abstracts), and the columns represent the search terms. Each entry in the matrix records how many times that article contains that term. For example, if we look at the first three articles we see that *adherence* does not occur in any of them, *adolescents* occurs in the third, *antidepressant* occurs in the first two, and *anxiety* occurs in all of them.
 
 ```{r}
-as.matrix(dfm)[1:5, 1:2]
+dfm[1:3, 1:4]
 ```
 
 We can then turn this matrix into a network of linked search terms, using the `litsearchr` function `create_network()`. This function has an argument `min_studies` that excludes terms that occur in fewer than a given number of articles.
 
 ```{r}
-g <- create_network(as.matrix(dfm), min_studies=3)
+g <- create_network(dfm, min_studies=3)
 ```
 
 ### ggraph
@@ -246,7 +246,7 @@ The `ggraph()` function takes the network that we got from `create_network()` as
 ```{r}
 ggraph(g, layout="stress") +
   coord_fixed() +
-  expand_limits(x=c(-3, 3.5)) +
+  expand_limits(x=c(-3, 3)) +
   geom_edge_link(aes(alpha=weight)) +
   geom_node_point(shape="circle filled", fill="white") +
   geom_node_text(aes(label=name), hjust="outward", check_overlap=TRUE) +
@@ -255,11 +255,11 @@ ggraph(g, layout="stress") +
 
 Given the way in which we drew the graph, it tells us a few things about our search terms.
 
-Terms that appear near the center of the graph and that are linked to each other by darker lines are probably more important for our overall topic. Here these include *anxiety disorder*, *social phobia*, and two variants of *cognitive-behavioral therapy* (with and without a hyphen), among others.
+Terms that appear near the center of the graph and that are linked to each other by darker lines are probably more important for our overall topic. Here these include for example *cbt*, *phobia*, and *behavioral therapy*.
 
-Terms that appear at the periphery of the graph and linked to it only by faint lines are not closely related to any other terms. These are mostly tangential terms unrelated to our main topic, for example *fmri*, *autism*, and *virtual reality*.
+Terms that appear at the periphery of the graph and linked to it only by faint lines are not closely related to any other terms. These are mostly tangential terms that are related to, but not part of, our main topic, for example *functional magnetic resonance imaging* and *emotion regulation*.
 
-Interestingly, we see one major anomaly at the very top of the graph. The clearly very relevant term *cognitive-behavioural therapy* is nonetheless isolated from the others. This is probably because it contains the minority British spelling of *behaviour*. We will need to treat this as a special case later on, and it is a good illustration of the importance of looking carefully at our results.
+Interestingly, we see some anomalies at the periphery of the graph. The clearly very relevant terms *cognitive behavior therapy* and *cognitive behavioural therapy* appear far from the center despite being variants of one of our main naive search terms. This is probably because they are minority variations on the terminology. One involves the British spelling of *behaviour*, and the other uses the word *behavior* where most authors prefer *behavioral*. We will need to treat the British spelling issue as a special case later on, and this is a good illustration of the importance of looking carefully at our results.
 
 ### Pruning
 
@@ -291,7 +291,7 @@ cutoff_fig <- ggplot(term_strengths, aes(x=rank, y=strength, label=term)) +
 cutoff_fig
 ```
 
-The figure shows the terms in ascending order of strength from left to right. Again, only an arbitrary subset of the terms are labeled, so as not to clutter the figure. We can see for example that there are four terms (starting with *anxiety*) that have much higher strengths than the others.
+The figure shows the terms in ascending order of strength from left to right. Again, only an arbitrary subset of the terms are labeled, so as not to clutter the figure. We can see for example that there are five terms (starting with *behavioral therapy*) that have much higher strengths than the others.
 
 Let's use this figure to visualize two methods that `litsearchr` offers for pruning away the search terms least closely linked to the others. Both of these involve finding a cutoff value for term strength, such that we discard terms with a strength below that value. The `find_cutoff()` function implements these methods.
 
@@ -349,7 +349,6 @@ Remember the issue with the British spelling of *behaviour*. We should add this 
 ```{r}
 extra_terms <- c(
   "medication",
-  "CBT",
   "cognitive-behavioural therapy",
   "cognitive behavioural therapy"
 )
@@ -369,9 +368,9 @@ There are methods for automatically grouping networks into clusters, but these a
 
 ```{r}
 grouped_terms <-list(
-  medication=selected_terms[c(6, 23)],
-  cbt=selected_terms[c(5, 13, 24, 25, 26)],
-  phobia=selected_terms[c(1, 2, 4, 7, 8, 11, 16, 19)]
+  medication=selected_terms[c(14, 28)],
+  cbt=selected_terms[c(4, 6, 7, 17, 24, 25, 26, 29, 30)],
+  phobia=selected_terms[c(2, 3, 9, 12, 15, 19, 20, 21, 23, 27)]
 )
 
 grouped_terms
