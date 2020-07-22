@@ -3284,9 +3284,9 @@ grouped_terms</code></pre>
   closure=&quot;left&quot;,
   writesearch=TRUE
 )</code></pre>
-<p>Let’s read in the text file that we just wrote.</p>
-<pre class="r"><code>read_file(&quot;search-inEnglish.txt&quot;)</code></pre>
-<pre><code>## [1] &quot;\\(\\(pharmacotherapi* OR medic*\\) AND \\(cbt OR \&quot;cognitive-behavior* therapi*\&quot; OR psychotherapi* OR \&quot;behavior* therapi*\&quot; OR \&quot;cognit* behavior*\&quot; OR \&quot;cognitive-behaviour* therapi*\&quot; OR \&quot;cognit* behaviour* therapi*\&quot;\\) AND \\(anxieti* OR fear* OR \&quot;panic* disord*\&quot; OR phobia* OR \&quot;social* anxieti*\&quot; OR \&quot;social* phobia*\&quot; OR \&quot;pediatr* anxieti*\&quot;\\)\\)\n&quot;</code></pre>
+<p>Let’s read in the contents of the text file that we just wrote, to see what our search text looks like.</p>
+<pre class="r"><code>cat(read_file(&quot;search-inEnglish.txt&quot;))</code></pre>
+<pre><code>## \(\(pharmacotherapi* OR medic*\) AND \(cbt OR &quot;cognitive-behavior* therapi*&quot; OR psychotherapi* OR &quot;behavior* therapi*&quot; OR &quot;cognit* behavior*&quot; OR &quot;cognitive-behaviour* therapi*&quot; OR &quot;cognit* behaviour* therapi*&quot;\) AND \(anxieti* OR fear* OR &quot;panic* disord*&quot; OR phobia* OR &quot;social* anxieti*&quot; OR &quot;social* phobia*&quot; OR &quot;pediatr* anxieti*&quot;\)\)</code></pre>
 <p>We can now go back to the search site and copy the contents of this text file into the search field to conduct a new search.</p>
 </div>
 <div id="checking-the-new-search" class="section level2">

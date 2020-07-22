@@ -397,10 +397,10 @@ write_search(
 )
 ```
 
-Let's read in the text file that we just wrote.
+Let's read in the contents of the text file that we just wrote, to see what our search text looks like.
 
 ```{r}
-read_file("search-inEnglish.txt")
+cat(read_file("search-inEnglish.txt"))
 ```
 
 We can now go back to the search site and copy the contents of this text file into the search field to conduct a new search.
