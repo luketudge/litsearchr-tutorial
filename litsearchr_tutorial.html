@@ -2863,7 +2863,7 @@ install_github(&quot;elizagrames/litsearchr&quot;, ref=&quot;main&quot;)</code><
 ## [49] &quot;uof&quot;                           &quot;personal_name_as_subject&quot;     
 ## [51] &quot;personal_name_as_subject_full&quot; &quot;uin&quot;                          
 ## [53] &quot;author_corporate&quot;</code></pre>
-<p>And just as a check, let’s can take a look at the title of the first result.</p>
+<p>And just as a check, let’s take a look at the title of the first result.</p>
 <pre class="r"><code>naive_results[1, &quot;title&quot;]</code></pre>
 <pre><code>## [1] &quot;Efficacy of treatments for anxiety disorders: a meta-analysis.&quot;</code></pre>
 </div>
@@ -3093,7 +3093,7 @@ title_terms</code></pre>
 </div>
 <div id="network-analysis" class="section level2">
 <h2>Network analysis</h2>
-<p>Our list of new search terms is looking fairly good. But there are probably still some in there that are unrelated to the others and to our topic of interest. These perhaps only occur in a small number of articles that do not mention any of the other search terms. We would like some systematic way of identifying these ‘isolated’ search terms.</p>
+<p>Our list of new search terms is looking fairly good. But there are probably still some in there that are unrelated to the others and to our topic of interest. These perhaps only occur in a small number of articles that do not mention many of the other search terms. We would like some systematic way of identifying these ‘isolated’ search terms.</p>
 <p>One way to do this is to analyze the search terms as a network. The idea behind this is that terms are linked to each other by virtue of appearing in the same articles. If we can find out which terms tend to occur together in the same article, we can pick out groups of terms that are probably all referring to the same topic (because they occur in the same subset of articles), and we can filter out terms that do not often occur together with any of the main groups of terms.</p>
 <p>We don’t have the full texts of the articles, and in any case checking for search terms in a large number of full texts would be a big task for my puny computer. So we will take the title and abstract of each article as the ‘content’ of that article, and count a term as having occurred in that article if it is to be found in either the title or abstract. For this, we need to join the title of each article to its abstract.</p>
 <pre class="r"><code>docs &lt;- paste(naive_results[, &quot;title&quot;], naive_results[, &quot;abstract&quot;])</code></pre>
@@ -3181,7 +3181,7 @@ cutoff_cum</code></pre>
 </div>
 <div id="changepoints" class="section level4">
 <h4>Changepoints</h4>
-<p>Looking at the figure above, another method of pruning away terms suggests itself. There are certain points along the ranking of terms where the strength of the next term is much greater than that of the previous one (places where the ascending line ‘jumps up’). We could use these places as cutoffs, since the terms below them have much lower strength than those above. There may of course be more than one place where term strength jumps up like this, so we will have multiple candidates for cutoffs. The same <code>find_cutoff()</code> function with the argument <code>method=&quot;changepoint&quot;</code> will find these cutoffs. The <code>knot_num</code> argument specifies how many ‘knots’ we wish to slice the keywords into.</p>
+<p>Looking at the figure above, another method of pruning away terms suggests itself. There are certain points along the ranking of terms where the strength of the next strongest term is much greater than that of the previous one (places where the ascending line ‘jumps up’). We could use these places as cutoffs, since the terms below them have much lower strength than those above. There may of course be more than one place where term strength jumps up like this, so we will have multiple candidates for cutoffs. The same <code>find_cutoff()</code> function with the argument <code>method=&quot;changepoint&quot;</code> will find these cutoffs. The <code>knot_num</code> argument specifies how many ‘knots’ we wish to slice the keywords into.</p>
 <pre class="r"><code>cutoff_change &lt;- find_cutoff(g, method=&quot;changepoint&quot;, knot_num=3)
 
 cutoff_change</code></pre>
@@ -3239,7 +3239,7 @@ selected_terms</code></pre>
 </div>
 <div id="grouping" class="section level2">
 <h2>Grouping</h2>
-<p>Now that we have got a revised list of search terms from the results of our naive search, we want to turn them into a new search query that we can use to get more articles relevant to the same topic. For this new, hopefully more rigorous, search we will need a combination of <code>OR</code> and <code>AND</code> operators. The <code>OR</code> operator should combine search terms that are all about the same subtopic, so that we get articles that contain any one of them. The <code>AND</code> operator should combine these groups of search terms so that we get only articles that mention at least one term from all of the subtopics that are interested in.</p>
+<p>Now that we have got a revised list of search terms from the results of our naive search, we want to turn them into a new search query that we can use to get more articles relevant to the same topic. For this new, hopefully more rigorous, search we will need a combination of <code>OR</code> and <code>AND</code> operators. The <code>OR</code> operator should combine search terms that are all about the same subtopic, so that we get articles that contain any one of them. The <code>AND</code> operator should combine these groups of search terms so that we get only articles that mention at least one term from each of the subtopics that we are interested in.</p>
 <p>In our starting example we had three subtopics, medication, cognitive-behavioral therapy, and phobias. So the first step is to take the terms that we have found and group them into clusters related to each of these topics. (Or it may be the case that our work with <code>litsearchr</code> has led us to rethink our subtopics or to add new ones.)</p>
 <p>There are methods for automatically grouping networks into clusters, but these are not always so reliable; computers don’t understand what words mean. Currently the <code>litsearchr</code> documentation recommends doing this step manually. We look at our search terms, and put them into a list of separate vectors, one for each subtopic.</p>
 <pre class="r"><code>grouped_terms &lt;-list(
@@ -3291,7 +3291,7 @@ grouped_terms</code></pre>
 </div>
 <div id="checking-the-new-search" class="section level2">
 <h2>Checking the new search</h2>
-<p>I ran our new search and downloaded them to a file called <em>pubmed-pharmacoth-set.nbib</em>. Let’s load this file of results with <code>litsearchr</code>.</p>
+<p>I ran our new search and downloaded the results to a file called <em>pubmed-pharmacoth-set.nbib</em>. Let’s load this file with <code>litsearchr</code>.</p>
 <pre class="r"><code>new_results &lt;- import_results(file=&quot;pubmed-pharmacoth-set.nbib&quot;)</code></pre>
 <pre><code>## Reading file pubmed-pharmacoth-set.nbib ... done</code></pre>
 <p>How many did we get this time?</p>

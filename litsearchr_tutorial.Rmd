@@ -86,7 +86,7 @@ There are columns for the title, authors, date, abstract, and so on. We can chec
 colnames(naive_results)
 ```
 
-And just as a check, let's can take a look at the title of the first result.
+And just as a check, let's take a look at the title of the first result.
 
 ```{r}
 naive_results[1, "title"]
@@ -203,7 +203,7 @@ terms <- unique(c(keywords, title_terms))
 
 ## Network analysis
 
-Our list of new search terms is looking fairly good. But there are probably still some in there that are unrelated to the others and to our topic of interest. These perhaps only occur in a small number of articles that do not mention any of the other search terms. We would like some systematic way of identifying these 'isolated' search terms.
+Our list of new search terms is looking fairly good. But there are probably still some in there that are unrelated to the others and to our topic of interest. These perhaps only occur in a small number of articles that do not mention many of the other search terms. We would like some systematic way of identifying these 'isolated' search terms.
 
 One way to do this is to analyze the search terms as a network. The idea behind this is that terms are linked to each other by virtue of appearing in the same articles. If we can find out which terms tend to occur together in the same article, we can pick out groups of terms that are probably all referring to the same topic (because they occur in the same subset of articles), and we can filter out terms that do not often occur together with any of the main groups of terms.
 
@@ -320,7 +320,7 @@ get_keywords(reduce_graph(g, cutoff_cum))
 
 #### Changepoints
 
-Looking at the figure above, another method of pruning away terms suggests itself. There are certain points along the ranking of terms where the strength of the next term is much greater than that of the previous one (places where the ascending line 'jumps up'). We could use these places as cutoffs, since the terms below them have much lower strength than those above. There may of course be more than one place where term strength jumps up like this, so we will have multiple candidates for cutoffs. The same `find_cutoff()` function with the argument `method="changepoint"` will find these cutoffs. The `knot_num` argument specifies how many 'knots' we wish to slice the keywords into.
+Looking at the figure above, another method of pruning away terms suggests itself. There are certain points along the ranking of terms where the strength of the next strongest term is much greater than that of the previous one (places where the ascending line 'jumps up'). We could use these places as cutoffs, since the terms below them have much lower strength than those above. There may of course be more than one place where term strength jumps up like this, so we will have multiple candidates for cutoffs. The same `find_cutoff()` function with the argument `method="changepoint"` will find these cutoffs. The `knot_num` argument specifies how many 'knots' we wish to slice the keywords into.
 
 ```{r}
 cutoff_change <- find_cutoff(g, method="changepoint", knot_num=3)
@@ -360,7 +360,7 @@ selected_terms
 
 ## Grouping
 
-Now that we have got a revised list of search terms from the results of our naive search, we want to turn them into a new search query that we can use to get more articles relevant to the same topic. For this new, hopefully more rigorous, search we will need a combination of `OR` and `AND` operators. The `OR` operator should combine search terms that are all about the same subtopic, so that we get articles that contain any one of them. The `AND` operator should combine these groups of search terms so that we get only articles that mention at least one term from all of the subtopics that are interested in.
+Now that we have got a revised list of search terms from the results of our naive search, we want to turn them into a new search query that we can use to get more articles relevant to the same topic. For this new, hopefully more rigorous, search we will need a combination of `OR` and `AND` operators. The `OR` operator should combine search terms that are all about the same subtopic, so that we get articles that contain any one of them. The `AND` operator should combine these groups of search terms so that we get only articles that mention at least one term from each of the subtopics that we are interested in.
 
 In our starting example we had three subtopics, medication, cognitive-behavioral therapy, and phobias. So the first step is to take the terms that we have found and group them into clusters related to each of these topics. (Or it may be the case that our work with `litsearchr` has led us to rethink our subtopics or to add new ones.)
 
@@ -407,7 +407,7 @@ We can now go back to the search site and copy the contents of this text file in
 
 ## Checking the new search
 
-I ran our new search and downloaded them to a file called *pubmed-pharmacoth-set.nbib*. Let's load this file of results with `litsearchr`.
+I ran our new search and downloaded the results to a file called *pubmed-pharmacoth-set.nbib*. Let's load this file with `litsearchr`.
 
 ```{r}
 new_results <- import_results(file="pubmed-pharmacoth-set.nbib")
