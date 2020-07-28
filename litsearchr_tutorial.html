@@ -3273,31 +3273,31 @@ grouped_terms</code></pre>
 <li><code>languages</code> provides a list of languages to translate the search into, in case we want to get articles in multiple languages.</li>
 <li><code>exactphrase</code> controls whether terms that consist of more than one word should be matched exactly rather than as two separate words. If we have phrases that are only relevant as a whole phrase, then we should set this to <code>TRUE</code>, so that for example <em>social phobia</em> will not also catch all the articles containing the word <em>social</em>.</li>
 <li><code>stemming</code> controls whether words are stripped down to the smallest meaningful part of the word (its ‘stem’) so that we make sure to catch all variants of the word, for example catching both <em>behavior</em> and <em>behavioral</em>.</li>
-<li><code>closure</code> controls whether these partial matches are matched at the left end of a word (<code>&quot;left&quot;</code>), at the right (<code>&quot;right&quot;</code>), only as exact matches (<code>&quot;full&quot;</code>) or as any word containing a word (<code>&quot;none&quot;</code>).</li>
+<li><code>closure</code> controls whether partial matches are matched at the left end of a word (<code>&quot;left&quot;</code>), at the right (<code>&quot;right&quot;</code>), only as exact matches (<code>&quot;full&quot;</code>) or as any word containing a term (<code>&quot;none&quot;</code>).</li>
 <li><code>writesearch</code> controls whether we would like to write the search text to a file.</li>
 </ul>
 <pre class="r"><code>write_search(
   grouped_terms,
   languages=&quot;English&quot;,
   exactphrase=TRUE,
-  stemming=TRUE,
+  stemming=FALSE,
   closure=&quot;left&quot;,
   writesearch=TRUE
 )</code></pre>
 <p>Let’s read in the contents of the text file that we just wrote, to see what our search text looks like.</p>
 <pre class="r"><code>cat(read_file(&quot;search-inEnglish.txt&quot;))</code></pre>
-<pre><code>## \(\(pharmacotherapi* OR medic*\) AND \(cbt OR &quot;cognitive-behavior* therapi*&quot; OR psychotherapi* OR &quot;behavior* therapi*&quot; OR &quot;cognit* behavior*&quot; OR &quot;cognitive-behaviour* therapi*&quot; OR &quot;cognit* behaviour* therapi*&quot;\) AND \(anxieti* OR fear* OR &quot;panic* disord*&quot; OR phobia* OR &quot;social* anxieti*&quot; OR &quot;social* phobia*&quot; OR &quot;pediatr* anxieti*&quot;\)\)</code></pre>
+<pre><code>## \(\(pharmacotherapy OR medication\) AND \(cbt OR &quot;cognitive-behavioral therapy&quot; OR psychotherapy OR &quot;behavioral therapy&quot; OR &quot;cognitive behavior&quot; OR &quot;cognitive-behavioural therapy&quot; OR &quot;cognitive behavioural therapy&quot;\) AND \(anxiety OR fear OR &quot;panic disorder&quot; OR phobia OR &quot;social anxiety&quot; OR &quot;social phobia&quot; OR &quot;pediatric anxiety&quot;\)\)</code></pre>
 <p>We can now go back to the search site and copy the contents of this text file into the search field to conduct a new search.</p>
 </div>
 <div id="checking-the-new-search" class="section level2">
 <h2>Checking the new search</h2>
-<p>I ran our new search and downloaded the results to a file called <em>pubmed-pharmacoth-set.nbib</em>. Let’s load this file with <code>litsearchr</code>.</p>
+<p>I ran our new search and downloaded the results to a file called <em>pubmed-pharmacoth-set.nbib</em>. Let’s load this file with <code>litsearchr</code>. This may take a moment, as this file contains a lot more results than the naive search.</p>
 <pre class="r"><code>new_results &lt;- import_results(file=&quot;pubmed-pharmacoth-set.nbib&quot;)</code></pre>
 <pre><code>## Reading file pubmed-pharmacoth-set.nbib ... done</code></pre>
-<p>How many did we get this time?</p>
+<p>How many did we get?</p>
 <pre class="r"><code>nrow(new_results)</code></pre>
-<pre><code>## [1] 3256</code></pre>
-<p>We get a lot more than with the naive search. We now need to check whether the new results are relevant to our chosen topic. This is something that we cannot do automatically. At this stage, we have to start sifting through the results and apply our domain expertise. But there are a few basic things that we can check.</p>
+<pre><code>## [1] 9890</code></pre>
+<p>We now need to check whether the new results seem to be relevant to our chosen topic. There are a few basic things that we can check.</p>
 <div id="against-the-naive-search" class="section level3">
 <h3>Against the naive search</h3>
 <p>We can first check whether all of the results of the naive search are in the new search. Since we conducted the naive search using the most important terms that occurred to us for our topic, and since we included these same terms or very similar in our new search, we ought to get the same articles back among our new results, at least if they were really relevant.</p>
@@ -3310,11 +3310,10 @@ naive_results %&gt;%
   select(title, keywords)</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["title"],"name":[1],"type":["chr"],"align":["left"]},{"label":["keywords"],"name":[2],"type":["chr"],"align":["left"]}],"data":[{"1":"Treatment of Persistent Postural-Perceptual Dizziness (PPPD) and Related Disorders.","2":"Chronic subjective dizziness and Cognitive-behavioral therapy and Functional neurological disorder and Persistent postural-perceptual dizziness and Phobic postural vertigo and Vestibular rehabilitation"},{"1":"Moclobemide and cognitive behavioral therapy in the treatment of social phobia. A six-month controlled study and 24 months follow up.","2":"NA"},{"1":"Effects of standard and explicit cognitive bias modification and computer-administered cognitive-behaviour therapy on cognitive biases and social anxiety.","2":"Cognitive bias modification and Cognitive biases and Computer-administered CBT and Social anxiety"},{"1":"CBT for anxiety and associated somatic complaints in pediatric medical settings: an open pilot study.","2":"NA"},{"1":"Do clinically anxious children cluster according to their expression of factors that maintain child anxiety?","2":"*Anxiety and *CBT and *Children and *LPA and *Treatment"},{"1":"Recent advances in understanding and treating social anxiety disorder.","2":"NA"},{"1":"Short-term cost-effectiveness of psychodynamic therapy and cognitive-behavioral therapy in social anxiety disorder: Results from the SOPHO-NET trial.","2":"Cognitive-behavioral therapy and Cost-effectiveness and Economic evaluation and Psychodynamic therapy and Social anxiety disorder"},{"1":"Medical student attitudes and educational interventions to prevent neurophobia: a longitudinal study.","2":"Caribbean and Case based teaching and Neuroscience and Problem based learning and Team based learning"},{"1":"D-Cycloserine as an augmentation strategy with cognitive-behavioral therapy for social anxiety disorder.","2":"NA"},{"1":"Does respiratory sinus arrhythmia (RSA) predict anxiety reduction during cognitive behavioral therapy (CBT) for social anxiety disorder (SAD)?","2":"NA"},{"1":"Change in quality of life and their predictors in the long-term follow-up after group cognitive behavioral therapy for social anxiety disorder: a prospective cohort study.","2":"NA"},{"1":"Predicting treatment response in social anxiety disorder from functional magnetic resonance imaging.","2":"NA"},{"1":"Pharmacotherapy of social anxiety disorder at the turn of the millennium.","2":"NA"},{"1":"Effects of Home-Delivered Cognitive Behavioral Therapy (CBT) for Depression on Anxiety Symptoms among Rural, Ethnically Diverse Older Adults.","2":"*Anxiety and *CBT and *home-delivered intervention and *rural"},{"1":"Risk profiles for poor treatment response to internet-delivered CBT in people with social anxiety disorder.","2":"Cluster analysis and Depressive symptoms and Guided internet-based CBT and Risk factors and Social anxiety disorder and Social avoidance"},{"1":"The treatment of social anxiety disorder.","2":"NA"},{"1":"Acceptance and commitment therapy for generalized social anxiety disorder: a pilot study.","2":"NA"},{"1":"Disturbed circadian core body temperature rhythm and sleep disturbance in school refusal children and adolescents.","2":"NA"},{"1":"Trajectories of change in anxiety severity and impairment during and after treatment with evidence-based treatment for multiple anxiety disorders in primary care.","2":"CBT/cognitive behavior therapy and anxiety/anxiety disorders and life events/stress and primary care and treatment"},{"1":"Cognitive-behavioral treatment for anxiety in patients with dementia: two case studies.","2":"NA"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["title"],"name":[1],"type":["chr"],"align":["left"]},{"label":["keywords"],"name":[2],"type":["chr"],"align":["left"]}],"data":[],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
-<p>The good news here is that most of the articles that were in the naive search but not in the new search are not really relevant to the overall topic. For example, the first article is about dizziness, and many of the others are about clinical syndromes other than phobia.</p>
-<p>The bad news is that there are some relevant articles that were in the naive search but are not in the new search. For example, there are clearly relevant studies of the drugs <em>moclobemide</em> and <em>D-cycloserine</em>. We should try to find out why we missed these. Some testing and checking with further searches will be necessary.</p>
+<p>We didn’t miss any of the articles from the naive search. Good.</p>
 </div>
 <div id="against-gold-standard-results" class="section level3">
 <h3>Against gold standard results</h3>

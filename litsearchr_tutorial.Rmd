@@ -383,7 +383,7 @@ The `write_search()` function takes our list of grouped search terms and writes 
 * `languages` provides a list of languages to translate the search into, in case we want to get articles in multiple languages.
 * `exactphrase` controls whether terms that consist of more than one word should be matched exactly rather than as two separate words. If we have phrases that are only relevant as a whole phrase, then we should set this to `TRUE`, so that for example *social phobia*  will not also catch all the articles containing the word *social*.
 * `stemming` controls whether words are stripped down to the smallest meaningful part of the word (its 'stem') so that we make sure to catch all variants of the word, for example catching both *behavior* and *behavioral*.
-* `closure` controls whether these partial matches are matched at the left end of a word (`"left"`), at the right (`"right"`), only as exact matches (`"full"`) or as any word containing a word (`"none"`).
+* `closure` controls whether partial matches are matched at the left end of a word (`"left"`), at the right (`"right"`), only as exact matches (`"full"`) or as any word containing a term (`"none"`).
 * `writesearch` controls whether we would like to write the search text to a file.
 
 ```{r, eval=FALSE}
@@ -391,7 +391,7 @@ write_search(
   grouped_terms,
   languages="English",
   exactphrase=TRUE,
-  stemming=TRUE,
+  stemming=FALSE,
   closure="left",
   writesearch=TRUE
 )
@@ -407,19 +407,19 @@ We can now go back to the search site and copy the contents of this text file in
 
 ## Checking the new search
 
-I ran our new search and downloaded the results to a file called *pubmed-pharmacoth-set.nbib*. Let's load this file with `litsearchr`.
+I ran our new search and downloaded the results to a file called *pubmed-pharmacoth-set.nbib*. Let's load this file with `litsearchr`. This may take a moment, as this file contains a lot more results than the naive search.
 
 ```{r}
 new_results <- import_results(file="pubmed-pharmacoth-set.nbib")
 ```
 
-How many did we get this time?
+How many did we get?
 
 ```{r}
 nrow(new_results)
 ```
 
-We get a lot more than with the naive search. We now need to check whether the new results are relevant to our chosen topic. This is something that we cannot do automatically. At this stage, we have to start sifting through the results and apply our domain expertise. But there are a few basic things that we can check.
+We now need to check whether the new results seem to be relevant to our chosen topic. There are a few basic things that we can check.
 
 ### Against the naive search
 
@@ -435,9 +435,7 @@ naive_results %>%
   select(title, keywords)
 ```
 
-The good news here is that most of the articles that were in the naive search but not in the new search are not really relevant to the overall topic. For example, the first article is about dizziness, and many of the others are about clinical syndromes other than phobia.
-
-The bad news is that there are some relevant articles that were in the naive search but are not in the new search. For example, there are clearly relevant studies of the drugs *moclobemide* and *D-cycloserine*. We should try to find out why we missed these. Some testing and checking with further searches will be necessary.
+We didn't miss any of the articles from the naive search. Good.
 
 ### Against gold standard results
 
