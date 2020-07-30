@@ -439,18 +439,18 @@ We didn't miss any of the articles from the naive search. Good.
 
 ### Against gold standard results
 
-If we have started reviewing the literature on our chosen topic, we may already know the titles of some important articles that have been written on the subject. So another way of checking our new search is to check whether it includes specific important results. `litsearchr` provides a function called `check_recall()` for searching for specific titles. We do not have to get the titles of our desired articles exactly right. If the capitalization or punctuation is slightly different from the version in our results dataframe, `check_recall()` will find the closest match,
+If we have started reviewing the literature on our chosen topic, we may already know the titles of some important articles that have been written on the subject. So another way of checking our new search is to check whether it includes specific important results. `litsearchr` provides a function called `check_recall()` for searching for specific titles. We do not have to get the titles of our desired articles exactly right. If the capitalization or punctuation is slightly different from the version in our results dataframe, `check_recall()` will find the closest match.
 
 Let's try it.
 
 ```{r}
 important_titles <- c(
-  "Efficacy of treatments for anxiety disorders: A meta-analysis",
-  "Cognitive-behavioral therapy for anxiety and related disorders: A meta-analysis of randomized placebo-controlled trials",
-  "Comparative effectiveness and safety of cognitive-behavioral therapy and pharmacotherapy for childhood anxiety disorders: A systematic review and meta-analysis"
+  "Efficacy of treatments for anxiety disorder: A meta-analysis",
+  "Cognitive behaviour therapy for health anxiety: A systematic review and meta-analysis",
+  "A systematic review and meta-analysis of treatments for agrophobia"
 )
 
-check_recall(important_titles, new_results[, "title"])
+data.frame(check_recall(important_titles, new_results[, "title"]))
 ```
 
 All of the best matches in the output table are clearly the articles that we were looking for, so our new search has found these.

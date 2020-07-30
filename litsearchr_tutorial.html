@@ -3317,27 +3317,20 @@ naive_results %&gt;%
 </div>
 <div id="against-gold-standard-results" class="section level3">
 <h3>Against gold standard results</h3>
-<p>If we have started reviewing the literature on our chosen topic, we may already know the titles of some important articles that have been written on the subject. So another way of checking our new search is to check whether it includes specific important results. <code>litsearchr</code> provides a function called <code>check_recall()</code> for searching for specific titles. We do not have to get the titles of our desired articles exactly right. If the capitalization or punctuation is slightly different from the version in our results dataframe, <code>check_recall()</code> will find the closest match,</p>
+<p>If we have started reviewing the literature on our chosen topic, we may already know the titles of some important articles that have been written on the subject. So another way of checking our new search is to check whether it includes specific important results. <code>litsearchr</code> provides a function called <code>check_recall()</code> for searching for specific titles. We do not have to get the titles of our desired articles exactly right. If the capitalization or punctuation is slightly different from the version in our results dataframe, <code>check_recall()</code> will find the closest match.</p>
 <p>Let’s try it.</p>
 <pre class="r"><code>important_titles &lt;- c(
-  &quot;Efficacy of treatments for anxiety disorders: A meta-analysis&quot;,
-  &quot;Cognitive-behavioral therapy for anxiety and related disorders: A meta-analysis of randomized placebo-controlled trials&quot;,
-  &quot;Comparative effectiveness and safety of cognitive-behavioral therapy and pharmacotherapy for childhood anxiety disorders: A systematic review and meta-analysis&quot;
+  &quot;Efficacy of treatments for anxiety disorder: A meta-analysis&quot;,
+  &quot;Cognitive behaviour therapy for health anxiety: A systematic review and meta-analysis&quot;,
+  &quot;A systematic review and meta-analysis of treatments for agrophobia&quot;
 )
 
-check_recall(important_titles, new_results[, &quot;title&quot;])</code></pre>
-<pre><code>##      Title                                                                                                                                                            
-## [1,] &quot;Efficacy of treatments for anxiety disorders: A meta-analysis&quot;                                                                                                  
-## [2,] &quot;Cognitive-behavioral therapy for anxiety and related disorders: A meta-analysis of randomized placebo-controlled trials&quot;                                        
-## [3,] &quot;Comparative effectiveness and safety of cognitive-behavioral therapy and pharmacotherapy for childhood anxiety disorders: A systematic review and meta-analysis&quot;
-##      Best_Match                                                                                                                                                        
-## [1,] &quot;Efficacy of treatments for anxiety disorders: a meta-analysis.&quot;                                                                                                  
-## [2,] &quot;Cognitive behavioral therapy for anxiety and related disorders: A meta-analysis of randomized placebo-controlled trials.&quot;                                        
-## [3,] &quot;Comparative Effectiveness and Safety of Cognitive Behavioral Therapy and Pharmacotherapy for Childhood Anxiety Disorders: A Systematic Review and Meta-analysis.&quot;
-##      Similarity         
-## [1,] &quot;0.975609756097561&quot;
-## [2,] &quot;0.98744769874477&quot; 
-## [3,] &quot;0.915360501567398&quot;</code></pre>
+data.frame(check_recall(important_titles, new_results[, &quot;title&quot;]))</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["Title"],"name":[1],"type":["chr"],"align":["left"]},{"label":["Best_Match"],"name":[2],"type":["chr"],"align":["left"]},{"label":["Similarity"],"name":[3],"type":["chr"],"align":["left"]}],"data":[{"1":"Efficacy of treatments for anxiety disorder: A meta-analysis","2":"Efficacy of treatments for anxiety disorders: a meta-analysis.","3":"0.752136752136752"},{"1":"Cognitive behaviour therapy for health anxiety: A systematic review and meta-analysis","2":"Cognitive Behaviour Therapy for Health Anxiety: A Systematic Review and Meta-Analysis.","3":"1"},{"1":"A systematic review and meta-analysis of treatments for agrophobia","2":"A systematic review and meta-analysis of treatments for acrophobia.","3":"0.984615384615385"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
 <p>All of the best matches in the output table are clearly the articles that we were looking for, so our new search has found these.</p>
 <p>That’s the end of our tutorial. You can try to refine the example search further, or try one of your own.</p>
 </div>
